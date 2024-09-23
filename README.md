@@ -12,4 +12,4 @@ The rules for merging are:
 Two new files are created:
 - a new AFSHORT file that contains the merge result
 - a CSV file that contains all the modifications done to shortcuts that were defined in the original file
-- a CSV file that contains all the duplicate keystroke commands that need to be resolved manually
+- a DUP file that contains all the duplicate keystroke commands that need to be resolved manually (so far, those have turned out empty, which is excellent)

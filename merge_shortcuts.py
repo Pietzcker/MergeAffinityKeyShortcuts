@@ -37,7 +37,7 @@ def update_file(filename):
     new = {}
     differences = {}
     output = []
-    seen_commands = set()
+    seen_keycombos = set()
     duplicate_commands = []
     update_commands = commands["update"].keys()
 
@@ -46,18 +46,27 @@ def update_file(filename):
             up_details = commands["update"][command]
             if details[:3]==up_details[:3]: # key, char, modifiers are identical --> both files are identical
                 output.append(details[3]) # keep original line and add it to output
+                if tuple(details[:3]) in seen_keycombos:          # Has this key combo been used elsewhere?
+                    duplicate_commands.append(details[:3] + list(command)) # make a note of that
+                seen_keycombos.add(tuple(details[:3]))
             else:                      # Or: The updated version is different from the original  
                 output.append(up_details[3]) # replace line with update and add it to output
                 differences[command] = details[:3] + up_details[:3] # document the differences
+                if tuple(up_details[:3]) in seen_keycombos:      
+                    duplicate_commands.append(up_details[:3] + list(command))
+                seen_keycombos.add(tuple(up_details[:3])) 
             del(commands["update"][command]) # Remove this entry from the update list
         else:                          # Or: The command is only found in the original file
             output.append(details[3])  # Then copy that line to the output file
-        seen_commands.add(command)
-    for command, details in commands["update"].items(): # Whatever remains in update_commands is unique to it
+            if tuple(details[:3]) in seen_keycombos:      
+                duplicate_commands.append(details[:3] + list(command))
+            seen_keycombos.add(tuple(details[:3]))
+    for command, details in commands["update"].items(): # Whatever remains in commands["update"] is unique to it
         output.append(details[3])            # so add those lines to the output file
-        if command in seen_commands:         # However, it's possible that it uses an already-used key combo
-            duplicate_commands.append(command) # so make a note of that
-    
+        if tuple(details[:3]) in seen_keycombos:      
+            duplicate_commands.append(details[:3] + list(command))
+        seen_keycombos.add(tuple(details[:3]))
+
     with open(f"./new/{filename}", "w", encoding="utf-8") as outfile:
         outfile.write(header)
         outfile.writelines(output)
@@ -71,7 +80,7 @@ def update_file(filename):
     
     with open(f"./new/{filename[:-4]}.dup", "w", encoding="utf-8", newline="") as outfile:
         writer = csv.writer(outfile, delimiter=";")
-        writer.writerow(("key", "char", "modifierKeys"))
+        writer.writerow(("key", "char", "modifierKeys", "type", "command", "scope", "tool", "functionEnum"))
         for item in duplicate_commands:
             writer.writerow(item)
     return
